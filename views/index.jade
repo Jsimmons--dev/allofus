@@ -1,6 +1,5 @@
 extends layout
 
 block content
-  h1= title
-  p Welcome to #{title}
-  p {{authData.github.username}}
+  h1 {{github.username}}
+  p {{user.first}} {{user.last}}
