@@ -1,6 +1,0 @@
-[4mRunning "concurrent:target1" (concurrent) task[24m
-    [4mRunning "watch" task[24m
-    Waiting...
-    [4mRunning "execute:target" (execute) task[24m
-    [36m-> [39mexecuting [36m/home/joshua/Git/allofus/bin/www[39m
-    26088
