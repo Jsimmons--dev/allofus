@@ -1,6 +1,28 @@
-var socialMediaApp = angular.module('socialMediaApp', ["firebase"]);
+var socialMediaApp = angular.module('socialMediaApp', ["ngRoute","firebase"]);
 
-socialMediaApp.controller('profileController',function($scope,$firebaseObject){        
+socialMediaApp.config(['$routeProvider',function($routeProvider){
+
+    $routeProvider
+        .when('/landing',{
+            templateUrl: '/templates/landing.html',
+            controller: 'landingController'
+        })
+        .when('/profile',{
+            templateUrl: '/templates/profile.html',
+            controller: 'profileController'
+        })
+        .otherwise({redirectTo: "/landing"});
+        
+}]);
+
+
+socialMediaApp.controller('landingController',function($scope,$firebaseObject){
+    var info = new Firebase("https://allofus.firebaseio.com/info");
+    $firebaseObject(info).$bindTo($scope,"info");
+    console.log("landingController loaded");
+});
+
+socialMediaApp.controller('profileController',function($scope,$firebaseObject){       
     var users = new Firebase("https://allofus.firebaseio.com/users");
 
 var onAuthCallback = function(authData) {

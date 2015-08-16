@@ -5,8 +5,7 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 
-var routes = require('./routes/index');
-var users = require('./routes/users');
+var routes = require('./routes/index.js');
 
 var app = express();
 
@@ -28,8 +27,13 @@ app.use(function(req,res,next) {
   next();
 });
 
-app.use('/', routes);
-app.use('/users', users);
+app.get('/',routes.index);
+//app.get('*',routes.index);
+
+app.get('/templates/:name',function(req,res) {
+    var name = req.params.name;
+    res.send('templates/' + name);
+});
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
