@@ -1,3 +1,10 @@
-h1 {{github.username}}
-p {{user.first}} {{user.last}}
+div(class="well")
+  h1 {{github.username}}
+  p {{user.first}} {{user.last}}
+h2 Friends
+input(ng-model="friendName" id="friendName" placeholder="Find Friends")
+button(class="btn btn-success" ng-click="requestFriend(friendName)") + 
+div(class="well col-md-4")
+  ul(class="list-group col-md-4" ng-repeat="friend in friends")
+    li(class="list-group-item col-md-4") {{friend}}
 

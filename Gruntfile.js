@@ -33,12 +33,10 @@ module.exports = function(grunt) {
     });
 
     grunt.loadNpmTasks('grunt-contrib-jade');
-
     grunt.loadNpmTasks('grunt-contrib-watch');
-    
     grunt.loadNpmTasks('grunt-execute');
-
     grunt.loadNpmTasks('grunt-concurrent');
+    grunt.loadNpmTasks('grunt-contrib-less');
 
    grunt.registerTask('default',['concurrent:target1']);
 

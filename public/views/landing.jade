@@ -1,4 +1,26 @@
-div.header
-  h1 {{info.header}}
-  p {{info.motd}}
-  a(href="#/profile") Log In 
+div(class="row container-fluid header")
+  div(class="col-md-4 text-center")
+    h1 {{info.header}}
+    p {{info.motd}}
+  div(class="signup")
+    div(class="well col-md-3 col-md-offset-4")
+      input(class="col-md-7 form-control" placeholder="Email")
+      input(class="col-md-7 form-control" placeholder="New Password")
+      a(href="#/signup" class="btn btn-success col-md-7") Sign Up!
+      hr
+      a(href="#/profile" style="float"  class="btn btn-success col-md-4  col-md-offset-1")
+        img(src="images/github.png")
+  div(class="row col-md-12 panelbody")
+    div.panelbody
+     div(class="row col-md-4 panelinfo")
+       h2 Why
+       br
+       p Because code is beautiful and so are you.
+       br
+       
+       p Your skills and accomplishments are worthy of praise!
+     div(class="col-md-7 col-md-offset-1 panelinfo")
+       h2 Share because you care
+       br
+       p learning how to code is hard enough. Come to a place where people want to help.
+       
