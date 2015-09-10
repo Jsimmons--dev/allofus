@@ -4,12 +4,11 @@ div(class="row container-fluid header")
     p {{info.motd}}
   div(class="signup")
     div(class="well col-md-3 col-md-offset-4")
-      input(class="col-md-7 form-control" placeholder="Email")
-      input(class="col-md-7 form-control" placeholder="New Password")
-      a(href="#/signup" class="btn btn-success col-md-7") Sign Up!
-      hr
-      a(href="#/profile" style="float"  class="btn btn-success col-md-4  col-md-offset-1")
-        img(src="images/github.png")
+      input(ng-model="email" class="col-md-7 form-control" placeholder="Email")
+      input(ng-model="password" class="col-md-7 form-control" placeholder="New Password")
+      a(href="#/signup" class="btn btn-success col-md-6") Sign Up!
+      a(ng-click="checkSignin(email,password)" class="btn btn-success col-md-6") Sign In!
+      p(class="loginstatus col-md-12") {{status}}
   div(class="row col-md-12 panelbody")
     div.panelbody
      div(class="row col-md-4 panelinfo")

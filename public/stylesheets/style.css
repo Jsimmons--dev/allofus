@@ -32,3 +32,13 @@ body {
     border-radius: 2px;
     margin:20px;
 }
+
+.loginstatus {
+	color: black;
+	text-align:center;
+}
+
+.friend-category {
+	text-align:center;
+	font-size:2em;
+}

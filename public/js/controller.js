@@ -1,103 +1,206 @@
-var socialMediaApp = angular.module('socialMediaApp', ["ngRoute","firebase","ui.bootstrap"]);
+var socialMediaApp = angular.module('socialMediaApp', ["ngRoute", "firebase", "ui.bootstrap"]);
 
-socialMediaApp.config(['$routeProvider',function($routeProvider){
+
+//routing happens here
+socialMediaApp.config(['$routeProvider', function ($routeProvider) {
 
     $routeProvider
-        .when('/landing',{
+        .when('/landing', {
             templateUrl: '/templates/landing.html',
             controller: 'landingController'
         })
-        .when('/profile',{
+        .when('/profile', {
             templateUrl: '/templates/profile.html',
             controller: 'profileController'
         })
-        .when('/signup',{
+        .when('/signup', {
             templateUrl: '/templates/signup.html',
             controller: 'signupController'
         })
-        .otherwise({redirectTo: "/landing"});
-        
+        .otherwise({
+            redirectTo: "/landing"
+        });
+
 }]);
 
 
-socialMediaApp.controller('landingController',function($scope,$firebaseObject){
-    var info = new Firebase("https://allofus.firebaseio.com/info");
-    $firebaseObject(info).$bindTo($scope,"info");
-    console.log("landingController loaded");
-    $scope.outer = {
-    
-        "background-color":"#A1E078"
+//this service handles all profile getting and setting
+socialMediaApp.service('profileService', function ($firebaseObject) {
 
+	var profileService = this;
+
+    this.base = new Firebase("https://allofus.firebaseio.com");
+
+    //reference to the users in the firebase
+    this.users = new Firebase("https://allofus.firebaseio.com/users/");
+
+    //get the profile object associated with the clientID
+    this.getProfile = function (email, callback) {
+        this.users.child(email)
+            .once("value", function (friend) {
+                callback(friend.val());
+            });
+    };
+
+    this.createUser = function (email, password, callback) {
+        this.base.createUser({
+            email: email,
+            password: password
+        }, function (error, userData) {
+            if (error) {
+                callback(error);
+            } else {
+                callback(userData);
+            }
+        });
+    };
+
+    this.searchForUser = function (email, callback) {
+        this.users.orderByChild("email")
+            .startAt(email)
+            .endAt(email)
+            .once("value", function (user) {
+                callback(user.val());
+            });
+    }
+
+    this.addFriend = function (userRef, email) {
+        profileService.userIdByEmail(email, function (friendID) {
+            if (friendID !== null) {
+
+				profileService.users.child(friendID)
+					.once("value",function(user){
+                userRef.child("friends/" + friendID)
+                    .set({
+							priority:0,
+						  	username:user.val().username});
+					});
+				userRef.once("value",function(user){
+	                profileService.users.child(friendID + "/friends/" + userRef.key())
+                    .set({
+						priority: -2,
+						username: user.val().username
+					});
+				});
+            }
+        });
+    }
+
+    this.userIdByEmail = function (email, callback) {
+        this.searchForUser(email, function (id) {
+			if(id !== null) {
+            callback(Object.keys(id)[0]);
+			} else {
+            callback(null);
+				}
+        });
+    }
+
+    this.userObjectByEmail = function (email, callback) {
+        this.searchForUser(email, function (id) {
+            this.users.child(Object.keys(id)[0])
+                .once("value", function (user) {
+                    callback(user.val());
+                });
+        });
+    }
+});
+
+socialMediaApp.controller('signupController', function ($scope, $firebaseObject, profileService, $location, $route) {
+    //reference to the users in the firebase
+    var users = new Firebase("https://allofus.firebaseio.com/users/");
+
+    profileService.base.unauth();
+    console.log(profileService.base.getAuth());
+
+    $scope.status = "signup is easy!";
+
+    $scope.signup = function (email, password, user) {
+        profileService.createUser(email, password, function (info) {
+                if (info.code === undefined) {
+                    users.child(info.uid)
+                        .set(user);
+                    $location.path('/profile');
+                    $route.reload();
+                } else {
+                    if (info.code === "EMAIL_TAKEN") {
+                        $scope.$apply(function () {
+                            $scope.status = "user with that email already exists!";
+                        });
+                    }
+                }
+            });
+        }
+});
+
+socialMediaApp.controller('landingController', function ($scope, $firebaseObject, profileService, $location, $route) {
+    var info = new Firebase("https://allofus.firebaseio.com/info");
+    $firebaseObject(info)
+        .$bindTo($scope, "info");
+    $scope.outer = {
+        "background-color": "#A1E078"
+    };
+
+    $scope.checkSignin = function (email, password) {
+        profileService.base.authWithPassword({
+            email: email,
+            password: password
+        }, function (error, authData) {
+            if (error) {
+                if (error.code === "INVALID_EMAIL") {
+                    $scope.$apply(function () {
+                        $scope.status = "No such user";
+                    });
+                }
+                if (error.code === "INVALID_PASSWORD") {
+                    $scope.$apply(function () {
+                        $scope.status = "Incorrect password";
+                    });
+                }
+                console.log("Login Failed!", error);
+            } else {
+                $location.path('/profile');
+                $route.reload();
+            }
+        });
     };
 });
 
-socialMediaApp.controller('profileController',function($scope,$firebaseObject){       
-    var user;
-    var users = new Firebase("https://allofus.firebaseio.com/users");
+socialMediaApp.controller('profileController', function ($scope, $firebaseObject, profileService, $location, $route) {
+    user = profileService.base.getAuth();
+    if (user === null) {
+        $location.path('/landing');
+        $route.reload();
+    } else {
+        profileService.base.child("users/" + user.uid)
+            .once("value", function (user) {
+                $scope.$apply(function () {
+                    $scope.userData = user.val()
+                });
+            });
+    }
 
-    var checkIfExists = function(userId,auth) {
-        users.child(userId).once('value',function(snap){
-            var exists = (snap.val() !== null);
-            createIfNew(userId,exists,auth);
-        }); 
-    };
+	$scope.addFriend = function(email){
+			profileService.addFriend(profileService.users.child(user.uid),email);
+		}
 
-    var createIfNew = function(userId,exists,auth) {
-        if(!exists) {
-            var newUser = {};
-            newUser[userId] = {
-                username:auth.github.username,
-            };
-          users.update(newUser);  
-        }
-    };
-
-    var loadFriendsList = function(user,friends){
-        user.child("friends").once("value",function(snapshot){
-            $.each(snapshot.val(),function(index,friend){
-                var friendref = users.child(friend);
-                friendref.once("value",function(snap){
-                    $scope.friends.push(snap.val().username);
-                    $scope.$apply();
-                }); 
-            }); 
+    profileService.users.child(user.uid)
+        .once("value", function (user) {
+            $scope.$apply(function () {
+                $scope.user = user.val();
+            });
         });
-    };
 
-    var onAuthCallback = function(authData) {
-        if (!authData) {
-            users.authWithOAuthRedirect("github", function (error) {
-                console.log("Login Failed!", error);
-            },{scopes:"user,user:follow"});
-        }
-        else {
-            checkIfExists(authData.github.id,authData);
-            
-            user = users.child(authData.github.username);
-            $firebaseObject(user).$bindTo($scope,"user");
+});
 
-            $scope.github = authData.github;
-
-            $scope.friends =[];
-            loadFriendsList(user,$scope.friends);
-        }
-
-    };
-
-    var findUserId = function(username,callback){
-        $.get("http://api.github.com/users/"+username,function(data){
-            callback(data.id);
-        });
-    };
-
-    var requestFriend = function(username){
-      findUserId(username,function(id){
-          user.child("friends").push(id);
-      });
-    };
-    $scope.requestFriend = requestFriend;
-    // Important: don't request authentication immediately
-    setTimeout(function() { users.onAuth(onAuthCallback); }, 400);
-
-
+socialMediaApp.filter('friendsFilter',function(){
+		return function(items,priority){
+			var result = [];	
+			angular.forEach(items,function(value,index) {
+				if(value.priority === priority) {
+					result.push(value);
+				}
+			});
+			return result;
+		}
 });

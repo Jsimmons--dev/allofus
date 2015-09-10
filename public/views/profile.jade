@@ -1,10 +1,25 @@
 div(class="well")
-  h1 {{github.username}}
+  h1 {{user.username}}
   p {{user.first}} {{user.last}}
 h2 Friends
-input(ng-model="friendName" id="friendName" placeholder="Find Friends")
-button(class="btn btn-success" ng-click="requestFriend(friendName)") + 
-div(class="well col-md-4")
-  ul(class="list-group col-md-4" ng-repeat="friend in friends")
-    li(class="list-group-item col-md-4") {{friend}}
+input(ng-model="friendEmail" id="friendEmail" placeholder="Find Friends")
+button(class="btn btn-success" ng-click="addFriend(friendEmail)") + 
+
+div(class="well col-md-3")
+  div(class="row")
+    p(class="friend-category") Pending Friend Requests
+    ul(class="list-group col-md-8 col-md-offset-2" ng-repeat="(key, value) in user.friends | friendsFilter:-2")
+      li(class="list-group-item") {{value.username}}
+  div(class="row")
+    p(class="friend-category") Sent Friend Requests
+    ul(class="list-group col-md-8 col-md-offset-2" ng-repeat="(key, value) in user.friends | friendsFilter:0")
+      li(class="list-group-item") {{value.username}}
+  div(class="row")
+    p(class="friend-category") Friends
+    ul(class="list-group col-md-8 col-md-offset-2" ng-repeat="(key, value) in user.friends | friendsFilter:1")
+      li(class="list-group-item") {{value.username}}
+  div(class="row")
+    p(class="friend-category") Collaborators
+    ul(class="list-group col-md-8 col-md-offset-2" ng-repeat="(key, value) in user.friends | friendsFilter:2")
+      li(class="list-group-item") {{value.username}}
 

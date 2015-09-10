@@ -1,1 +1,13 @@
-p sign up is easy!
+div 
+  p {{status}} 
+  h3 First Name
+  input(ng-model="newProfile.first")
+  h3 Last Name
+  input(ng-model="newProfile.last")
+  h3 Email
+  input(ng-model="newProfile.email")
+  h3 Password 
+  input(ng-model="password")
+  h3 Username 
+  input(ng-model="newProfile.username")
+  button(class="btn btn-primary" ng-click="signup(newProfile.email,password,newProfile)") Create Profile
