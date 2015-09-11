@@ -17,7 +17,7 @@ div(class="well col-md-4")
         button(class="btn btn-danger") - 
   div(class="row")
     p(class="friend-category") Sent Friend Requests
-    ul(class="list-group col-md-8 col-md-offset-2" ng-repeat="(key, value) in user.friends | friendsFilter:0")
+    ul(class="list-group col-md-8 col-md-offset-2" ng-repeat="(key, value) in friends | friendsFilter:0")
       li(class="list-group-item")
         button(class="btn btn-info" ng-click="goToProfile(value.uid)") ^ 
         span {{value.username}}
@@ -36,7 +36,7 @@ div(class="well col-md-4")
         span {{value.username}}
 div(class="well col-md-8")  
   h1(class="text-center") Feed
-  ul(class="list-group col-md-10 col-md-offset-1" ng-repeat="(key, value) in user.posts")
+  ul(class="list-group col-md-10 col-md-offset-1" ng-repeat="(key, value) in posts")
     li(class="list-group-item") {{value.body}}
   input(ng-model="newPost" id="newPost" placeholder="What are you thinking?")
   button(class="btn btn-success" ng-click="post(newPost)") + 

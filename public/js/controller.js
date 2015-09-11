@@ -203,19 +203,22 @@ socialMediaApp.controller('landingController', function ($scope, $firebaseObject
     };
 });
 
-socialMediaApp.controller('profileController', function ($scope, $firebaseObject, profileService, $location, $route) {
+socialMediaApp.controller('profileController', function ($scope, $firebaseObject, profileService, $location, $route,$firebaseArray) {
     user = profileService.base.getAuth();
     if (user === null) {
         $location.path('/landing');
         $route.reload();
     } else {
         profileService.base.child("users/" + user.uid)
-            .once("value", function (user) {
+            .on("value", function (user) {
                 $scope.$apply(function () {
                     $scope.userData = user.val()
                 });
             });
     }
+		$scope.friends = $firebaseArray(profileService.base.child("users/" + user.uid).child("friends"));
+
+		$scope.posts = $firebaseArray(profileService.base.child("users/"+user.uid).child("posts"));
 
     $scope.goToProfile = function (id) {
         console.log(id);
