@@ -1,0 +1,7 @@
+mixin largeFeed(person1)
+  - var person1 = person1
+  div(class="well col-md-8")  
+    h1(class="text-center") Feed
+    ul(class="list-group col-md-10 col-md-offset-1" ng-repeat="(key, value) in #{person1}.posts")
+      li(class="list-group-item") {{value.body}}
+  

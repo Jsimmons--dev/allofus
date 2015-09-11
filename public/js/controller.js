@@ -13,6 +13,10 @@ socialMediaApp.config(['$routeProvider', function ($routeProvider) {
             templateUrl: '/templates/profile.html',
             controller: 'profileController'
         })
+        .when('/profile/:id', {
+            templateUrl: '/templates/profile-view.html',
+            controller: 'profileViewController'
+        })
         .when('/signup', {
             templateUrl: '/templates/signup.html',
             controller: 'signupController'
@@ -27,7 +31,7 @@ socialMediaApp.config(['$routeProvider', function ($routeProvider) {
 //this service handles all profile getting and setting
 socialMediaApp.service('profileService', function ($firebaseObject) {
 
-	var profileService = this;
+    var profileService = this;
 
     this.base = new Firebase("https://allofus.firebaseio.com");
 
@@ -68,31 +72,36 @@ socialMediaApp.service('profileService', function ($firebaseObject) {
         profileService.userIdByEmail(email, function (friendID) {
             if (friendID !== null) {
 
-				profileService.users.child(friendID)
-					.once("value",function(user){
-                userRef.child("friends/" + friendID)
-                    .set({
-							priority:0,
-						  	username:user.val().username});
-					});
-				userRef.once("value",function(user){
-	                profileService.users.child(friendID + "/friends/" + userRef.key())
-                    .set({
-						priority: -2,
-						username: user.val().username
-					});
-				});
+                profileService.users.child(friendID)
+                    .once("value", function (user) {
+                        userRef.child("friends/" + friendID)
+                            .set({
+                                priority: 0,
+                                username: user.val()
+                                    .username,
+                                uid: user.key()
+                            });
+                    });
+                userRef.once("value", function (user) {
+                    profileService.users.child(friendID + "/friends/" + userRef.key())
+                        .set({
+                            priority: -2,
+                            username: user.val()
+                                .username,
+                            uid: user.key()
+                        });
+                });
             }
         });
     }
 
     this.userIdByEmail = function (email, callback) {
         this.searchForUser(email, function (id) {
-			if(id !== null) {
-            callback(Object.keys(id)[0]);
-			} else {
-            callback(null);
-				}
+            if (id !== null) {
+                callback(Object.keys(id)[0]);
+            } else {
+                callback(null);
+            }
         });
     }
 
@@ -104,8 +113,36 @@ socialMediaApp.service('profileService', function ($firebaseObject) {
                 });
         });
     }
+
+    this.post = function (userRef, newPost) {
+        userRef.child("posts")
+            .push({
+                body: newPost
+            });
+    }
 });
 
+socialMediaApp.controller('profileViewController', function ($scope, $firebaseObject, profileService, $location, $route, $routeParams) {
+    //reference to the users in the firebase
+    user = profileService.base.getAuth();
+    if (user === null) {
+        $location.path('/landing');
+        $route.reload();
+    } else {
+        profileService.base.child("users/" + $routeParams.id)
+            .once("value", function (user) {
+                $scope.$apply(function () {
+                    $scope.otherUser = user.val()
+                });
+            });
+        profileService.base.child("users/" + user.uid)
+            .once("value", function (user) {
+                $scope.$apply(function () {
+                    $scope.user = user.val();
+                });
+            });
+    }
+});
 socialMediaApp.controller('signupController', function ($scope, $firebaseObject, profileService, $location, $route) {
     //reference to the users in the firebase
     var users = new Firebase("https://allofus.firebaseio.com/users/");
@@ -117,20 +154,20 @@ socialMediaApp.controller('signupController', function ($scope, $firebaseObject,
 
     $scope.signup = function (email, password, user) {
         profileService.createUser(email, password, function (info) {
-                if (info.code === undefined) {
-                    users.child(info.uid)
-                        .set(user);
-                    $location.path('/profile');
-                    $route.reload();
-                } else {
-                    if (info.code === "EMAIL_TAKEN") {
-                        $scope.$apply(function () {
-                            $scope.status = "user with that email already exists!";
-                        });
-                    }
+            if (info.code === undefined) {
+                users.child(info.uid)
+                    .set(user);
+                $location.path('/profile');
+                $route.reload();
+            } else {
+                if (info.code === "EMAIL_TAKEN") {
+                    $scope.$apply(function () {
+                        $scope.status = "user with that email already exists!";
+                    });
                 }
-            });
-        }
+            }
+        });
+    }
 });
 
 socialMediaApp.controller('landingController', function ($scope, $firebaseObject, profileService, $location, $route) {
@@ -180,9 +217,19 @@ socialMediaApp.controller('profileController', function ($scope, $firebaseObject
             });
     }
 
-	$scope.addFriend = function(email){
-			profileService.addFriend(profileService.users.child(user.uid),email);
-		}
+    $scope.goToProfile = function (id) {
+        console.log(id);
+        $location.path('/profile/' + id);
+        $route.reload();
+    }
+
+    $scope.addFriend = function (email) {
+        profileService.addFriend(profileService.users.child(user.uid), email);
+    }
+
+    $scope.post = function (newPost) {
+        profileService.post(profileService.users.child(user.uid), newPost);
+    }
 
     profileService.users.child(user.uid)
         .once("value", function (user) {
@@ -193,14 +240,30 @@ socialMediaApp.controller('profileController', function ($scope, $firebaseObject
 
 });
 
-socialMediaApp.filter('friendsFilter',function(){
-		return function(items,priority){
-			var result = [];	
-			angular.forEach(items,function(value,index) {
-				if(value.priority === priority) {
-					result.push(value);
-				}
-			});
-			return result;
-		}
+socialMediaApp.filter('friendsFilter', function () {
+    return function (items, priority) {
+        var result = [];
+        angular.forEach(items, function (value, index) {
+            if (value.priority === priority) {
+                result.push(value);
+            }
+        });
+        return result;
+    }
+});
+
+socialMediaApp.filter('mutualFilter', function () {
+    return function (items, otherFriends) {
+        var result = [];
+        var otherFriendsArray = [];
+        angular.forEach(otherFriends, function (value, index) {
+            otherFriendsArray.push(value.username);
+        });
+        angular.forEach(items, function (value, index) {
+            if (otherFriendsArray.indexOf(value.username) !== -1) {
+                result.push(value);
+            }
+        });
+        return result;
+    }
 });

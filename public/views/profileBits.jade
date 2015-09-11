@@ -1,0 +1,12 @@
+mixin profileHeader(person1)
+  - var person1 = person1
+  div(class="well col-md-12")
+    h1(class="text-center") {{#{person1}.username}}
+
+mixin mutualFriends(person1,person2)
+  - var person1 = person1
+  - var person2 = person2
+  div(class="well col-md-4")
+    h1 Mutual Friends
+    ul(class="list-group col-md-8 col-md-offset-2" ng-repeat="(key, value) in #{person1}.friends | mutualFilter:#{person2}.friends")
+      li(class="list-group-item") {{value.username}}
